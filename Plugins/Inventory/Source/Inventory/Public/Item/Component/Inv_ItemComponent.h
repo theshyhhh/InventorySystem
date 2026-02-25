@@ -7,7 +7,7 @@
 #include "Inv_ItemComponent.generated.h"
 
 
-UCLASS(ClassGroup=(Custom), meta=(BlueprintSpawnableComponent))
+UCLASS(ClassGroup=(Custom), meta=(BlueprintSpawnableComponent), Blueprintable)
 class INVENTORY_API UInv_ItemComponent : public UActorComponent
 {
 	GENERATED_BODY()
@@ -15,9 +15,9 @@ class INVENTORY_API UInv_ItemComponent : public UActorComponent
 public:
 	UInv_ItemComponent();
 
-protected:
-	virtual void BeginPlay() override;
+	FORCEINLINE FString GetPickUpMessage() const { return PickUpMessage; }
 
-public:
-	virtual void TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction) override;
+private:
+	UPROPERTY(EditDefaultsOnly, Category="Inventory")
+	FString PickUpMessage;
 };

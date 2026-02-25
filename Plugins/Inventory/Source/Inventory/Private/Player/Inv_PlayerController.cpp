@@ -3,6 +3,8 @@
 #include "EnhancedInputComponent.h"
 #include "EnhancedInputSubsystems.h"
 #include "Inventory.h"
+#include "Interaction/Inv_HighlightInterface.h"
+#include "Item/Component/Inv_ItemComponent.h"
 #include "Kismet/GameplayStatics.h"
 #include "Widget/HUD/Inv_HUDWidget.h"
 
@@ -64,13 +66,30 @@ void AInv_PlayerController::TraceForItem()
 	GetWorld()->LineTraceSingleByChannel(HitResult, TraceStart, TraceEnd, ItemTraceChannel);
 	PreviousActor = CurrentActor;
 	CurrentActor = HitResult.GetActor();
+	//如果当前指向的Actor为空，则隐藏拾取信息
+	if (!CurrentActor.IsValid() && IsValid(HUDWidget))HUDWidget->HidePickUpMessage();
 	if (CurrentActor == PreviousActor)return;
 	if (CurrentActor.IsValid())
 	{
 		UE_LOG(LogInventory, Warning, TEXT("Current Actor %s"), *CurrentActor->GetName());
+		UInv_ItemComponent* ItemComp = CurrentActor->FindComponentByClass<UInv_ItemComponent>();
+		//显示拾取信息
+		if (IsValid(ItemComp) && IsValid(HUDWidget))HUDWidget->ShowPickUpMessage(ItemComp->GetPickUpMessage());
+		//高亮当前检测到的Actor
+		if (UActorComponent* HighlightableComp = CurrentActor->FindComponentByInterface(UInv_HighlightInterface::StaticClass());
+			IsValid(HighlightableComp))
+		{
+			IInv_HighlightInterface::Execute_Highlight(HighlightableComp);
+		}
 	}
 	if (PreviousActor.IsValid())
 	{
 		UE_LOG(LogInventory, Warning, TEXT("Previous Actor %s"), *PreviousActor->GetName());
+		//取消上一个检测到的Actor的高光
+		if (UActorComponent* HighlightableComp = PreviousActor->FindComponentByInterface(UInv_HighlightInterface::StaticClass());
+			IsValid(HighlightableComp))
+		{
+			IInv_HighlightInterface::Execute_Unhighlight(HighlightableComp);
+		}
 	}
 }
