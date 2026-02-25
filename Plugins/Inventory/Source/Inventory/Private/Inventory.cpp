@@ -4,6 +4,8 @@
 
 #define LOCTEXT_NAMESPACE "FInventoryModule"
 
+DEFINE_LOG_CATEGORY(LogInventory);
+
 void FInventoryModule::StartupModule()
 {
 	// This code will execute after your module is loaded into memory; the exact timing is specified in the .uplugin file per-module
@@ -16,5 +18,5 @@ void FInventoryModule::ShutdownModule()
 }
 
 #undef LOCTEXT_NAMESPACE
-	
+
 IMPLEMENT_MODULE(FInventoryModule, Inventory)
