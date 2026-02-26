@@ -15,11 +15,20 @@ class INVENTORY_API UInv_InventoryComponent : public UActorComponent
 public:
 	UInv_InventoryComponent();
 
+	//切换库存菜单的显隐
+	void ToggleInventoryMenu();
+
 protected:
 	virtual void BeginPlay() override;
 
 private:
 	void ConstructInventory();
+
+	/**打开库存菜单 显示鼠标*/
+	void OpenInventoryMenu();
+
+	/**关闭库存菜单 隐藏鼠标*/
+	void CloseInventoryMenu();
 
 	TWeakObjectPtr<APlayerController> OwningPlayerController;
 
@@ -28,4 +37,6 @@ private:
 
 	UPROPERTY(EditDefaultsOnly, Category="Inventory")
 	TSubclassOf<UInv_InventoryBaseWidget> InventoryMenuClass;
+
+	bool bInventoryMenuOpen = false;
 };

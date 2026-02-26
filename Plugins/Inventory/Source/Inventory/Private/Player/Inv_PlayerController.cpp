@@ -4,6 +4,7 @@
 #include "EnhancedInputSubsystems.h"
 #include "Inventory.h"
 #include "Interaction/Inv_HighlightInterface.h"
+#include "InventoryManagement/Component/Inv_InventoryComponent.h"
 #include "Item/Component/Inv_ItemComponent.h"
 #include "Kismet/GameplayStatics.h"
 #include "Widget/HUD/Inv_HUDWidget.h"
@@ -13,12 +14,19 @@ AInv_PlayerController::AInv_PlayerController()
 	PrimaryActorTick.bCanEverTick = true;
 }
 
+void AInv_PlayerController::ToggleInventoryMenu()
+{
+	if (!InventoryComponent.IsValid())return;
+	InventoryComponent->ToggleInventoryMenu();
+}
+
 void AInv_PlayerController::BeginPlay()
 {
 	Super::BeginPlay();
 	UEnhancedInputLocalPlayerSubsystem* InputSubsystem = ULocalPlayer::GetSubsystem<UEnhancedInputLocalPlayerSubsystem>(GetLocalPlayer());
 	check(InputSubsystem);
 	InputSubsystem->AddMappingContext(DefaultIMC, 0);
+	InventoryComponent = FindComponentByClass<UInv_InventoryComponent>();
 	CreateHUDWidget();
 }
 
@@ -27,6 +35,7 @@ void AInv_PlayerController::SetupInputComponent()
 	Super::SetupInputComponent();
 	UEnhancedInputComponent* EnhancedInputComp = CastChecked<UEnhancedInputComponent>(InputComponent);
 	EnhancedInputComp->BindAction(PrimaryInteractionAction, ETriggerEvent::Started, this, &AInv_PlayerController::PrimaryInteract);
+	EnhancedInputComp->BindAction(ToggleInventoryMenuAction, ETriggerEvent::Started, this, &AInv_PlayerController::ToggleInventoryMenu);
 }
 
 void AInv_PlayerController::Tick(float DeltaTime)
