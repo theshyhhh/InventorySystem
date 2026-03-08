@@ -47,6 +47,12 @@ void AInv_PlayerController::Tick(float DeltaTime)
 void AInv_PlayerController::PrimaryInteract()
 {
 	UE_LOG(LogInventory, Log, TEXT("Primary interact"));
+	if (!CurrentActor.IsValid())return;
+	UInv_ItemComponent* ItemComp = CurrentActor->FindComponentByClass<UInv_ItemComponent>();
+	if (ItemComp && InventoryComponent.IsValid())
+	{
+		InventoryComponent->TryAddItem(ItemComp);
+	}
 }
 
 void AInv_PlayerController::CreateHUDWidget()

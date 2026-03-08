@@ -5,7 +5,7 @@
 #include "Inv_InventoryItem.generated.h"
 
 /**
- * 
+ * 用于代表物品本身的轻量级的类
  */
 UCLASS()
 class INVENTORY_API UInv_InventoryItem : public UObject

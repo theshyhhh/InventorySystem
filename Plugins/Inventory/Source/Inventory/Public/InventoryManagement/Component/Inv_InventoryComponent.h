@@ -5,7 +5,13 @@
 #include "Inv_InventoryComponent.generated.h"
 
 
+class UInv_ItemComponent;
+class UInv_InventoryItem;
 class UInv_InventoryBaseWidget;
+
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnInventoryItemChangeSignature, UInv_InventoryItem*, Item);
+
+DECLARE_DYNAMIC_MULTICAST_DELEGATE(FInventoryNoRoomSignature);
 
 UCLASS(ClassGroup=(Custom), meta=(BlueprintSpawnableComponent), Blueprintable)
 class INVENTORY_API UInv_InventoryComponent : public UActorComponent
@@ -17,6 +23,15 @@ public:
 
 	//切换库存菜单的显隐
 	void ToggleInventoryMenu();
+
+	UFUNCTION(BlueprintCallable, BlueprintAuthorityOnly, Category="Inventory")
+	void TryAddItem(UInv_ItemComponent* ItemComp);
+
+	FOnInventoryItemChangeSignature OnItemAddedDelegate;
+
+	FOnInventoryItemChangeSignature OnItemRemovedDelegate;
+
+	FInventoryNoRoomSignature OnInventoryNoRoomDelegate;
 
 protected:
 	virtual void BeginPlay() override;

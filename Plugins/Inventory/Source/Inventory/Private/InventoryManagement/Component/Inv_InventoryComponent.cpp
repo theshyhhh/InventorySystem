@@ -1,7 +1,6 @@
 ﻿#include "InventoryManagement/Component/Inv_InventoryComponent.h"
 #include "Widget/Inventory/InventoryBase/Inv_InventoryBaseWidget.h"
 
-
 UInv_InventoryComponent::UInv_InventoryComponent()
 {
 	PrimaryComponentTick.bCanEverTick = true;
@@ -17,6 +16,11 @@ void UInv_InventoryComponent::ToggleInventoryMenu()
 	{
 		OpenInventoryMenu();
 	}
+}
+
+void UInv_InventoryComponent::TryAddItem(UInv_ItemComponent* ItemComp)
+{
+	OnInventoryNoRoomDelegate.Broadcast();
 }
 
 void UInv_InventoryComponent::OpenInventoryMenu()
