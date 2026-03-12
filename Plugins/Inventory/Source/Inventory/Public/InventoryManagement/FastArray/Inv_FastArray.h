@@ -54,6 +54,11 @@ struct FInv_InventoryFastArraySerializer : public FFastArraySerializer
 		return FastArrayDeltaSerialize<FInv_InventoryEntry, FInv_InventoryFastArraySerializer>(Entries, DeltaParams, *this);
 	}
 
+	/**
+	 * 根据传入的物品组件，创建物品的UInv_InventoryItem添加到Entries数组中并返回
+	 * @param ItemComponent 要添加的物品的组件
+	 * @return 返回创建的UInv_InventoryItem
+	 */
 	UInv_InventoryItem* AddEntry(UInv_ItemComponent* ItemComponent);
 
 	UInv_InventoryItem* AddEntry(UInv_InventoryItem* Item);

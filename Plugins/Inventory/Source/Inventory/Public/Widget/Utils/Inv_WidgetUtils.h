@@ -17,4 +17,12 @@ public:
 	 * @return 返回该位置的索引
 	 */
 	static int32 GetIndexFromPosition(const FIntPoint& Position, const int32 Column);
+
+	/**
+	 * 
+	 * @param Index 在数组中的索引
+	 * @param Column 列数
+	 * @return 在几列几行
+	 */
+	static FIntPoint GetPositionFromIndex(const int32 Index, const int32 Column);
 };

@@ -1,7 +1,9 @@
 ﻿#include "Widget/Inventory/SpatialInventory/Inv_SpatialInventoryWidget.h"
 
+#include "Inventory.h"
 #include "Components/Button.h"
 #include "Components/WidgetSwitcher.h"
+#include "InventoryManagement/Utils/Inv_InventoryStatics.h"
 #include "Widget/Inventory/SpatialInventory/Inv_InventoryGrid.h"
 
 void UInv_SpatialInventoryWidget::NativeOnInitialized()
@@ -11,6 +13,22 @@ void UInv_SpatialInventoryWidget::NativeOnInitialized()
 	Button_Consumable->OnClicked.AddDynamic(this, &UInv_SpatialInventoryWidget::ShowConsumable);
 	Button_Craftable->OnClicked.AddDynamic(this, &UInv_SpatialInventoryWidget::ShowCraftable);
 	ShowEquippable();
+}
+
+FInv_SlotAvailabilityResult UInv_SpatialInventoryWidget::HasRoomForItem(UInv_ItemComponent* ItemComp)
+{
+	switch (UInv_InventoryStatics::GetItemCategoryFromItemComponent(ItemComp))
+	{
+	case EInv_ItemCategory::Equippable:
+		return Grid_Equippable->HasRoomForItem(ItemComp);
+	case EInv_ItemCategory::Consumable:
+		return Grid_Consumable->HasRoomForItem(ItemComp);
+	case EInv_ItemCategory::Craftable:
+		return Grid_Craftable->HasRoomForItem(ItemComp);
+	default:
+		UE_LOG(LogInventory, Error, TEXT("ItemComp没有有效的ItemCategory"))
+		return FInv_SlotAvailabilityResult();
+	}
 }
 
 void UInv_SpatialInventoryWidget::ShowEquippable()

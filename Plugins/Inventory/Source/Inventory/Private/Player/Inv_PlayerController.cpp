@@ -24,8 +24,10 @@ void AInv_PlayerController::BeginPlay()
 {
 	Super::BeginPlay();
 	UEnhancedInputLocalPlayerSubsystem* InputSubsystem = ULocalPlayer::GetSubsystem<UEnhancedInputLocalPlayerSubsystem>(GetLocalPlayer());
-	check(InputSubsystem);
-	InputSubsystem->AddMappingContext(DefaultIMC, 0);
+	if (InputSubsystem)
+	{
+		InputSubsystem->AddMappingContext(DefaultIMC, 0);
+	}
 	InventoryComponent = FindComponentByClass<UInv_InventoryComponent>();
 	CreateHUDWidget();
 }

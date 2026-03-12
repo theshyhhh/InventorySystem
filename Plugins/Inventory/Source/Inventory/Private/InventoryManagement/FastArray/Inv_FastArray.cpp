@@ -2,6 +2,7 @@
 
 #include "InventoryManagement/Component/Inv_InventoryComponent.h"
 #include "Item/Inv_InventoryItem.h"
+#include "Item/Component/Inv_ItemComponent.h"
 
 
 void FInv_InventoryFastArraySerializer::PreReplicatedRemove(const TArrayView<int32>& RemovedIndices, int32 FinalSize)
@@ -24,13 +25,22 @@ void FInv_InventoryFastArraySerializer::PostReplicatedAdd(const TArrayView<int32
 
 UInv_InventoryItem* FInv_InventoryFastArraySerializer::AddEntry(UInv_ItemComponent* ItemComponent)
 {
-	return nullptr;
+	check(OwningComponent)
+	AActor* OwningActor = OwningComponent->GetOwner();
+	//保证只在服务器上调用该函数
+	check(OwningActor->HasAuthority())
+	FInv_InventoryEntry& Entry = Entries.AddDefaulted_GetRef();
+	Entry.Item = ItemComponent->GetItemManifest().CreateItemByManifest(OwningActor);
+	OwningComponent->AddSubObject(Entry.Item);
+	MarkItemDirty(Entry);
+	return Entry.Item;
 }
 
 UInv_InventoryItem* FInv_InventoryFastArraySerializer::AddEntry(UInv_InventoryItem* Item)
 {
 	check(OwningComponent)
 	AActor* OwningActor = OwningComponent->GetOwner();
+	//保证只在服务器上调用该函数
 	check(OwningActor->HasAuthority())
 	FInv_InventoryEntry& Entry = Entries.AddDefaulted_GetRef();
 	Entry.Item = Item;
