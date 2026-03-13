@@ -1,5 +1,6 @@
 ﻿#include "Widget/Inventory/SpatialInventory/Inv_InventoryGrid.h"
 
+#include "Inventory.h"
 #include "Blueprint/WidgetLayoutLibrary.h"
 #include "Components/CanvasPanel.h"
 #include "Components/CanvasPanelSlot.h"
@@ -80,8 +81,10 @@ void UInv_InventoryGrid::AddItemToIndices(const FInv_SlotAvailabilityResult& Res
 		ItemCPS->SetPosition(DrawPos);
 		//将Widget存储到一个容器中供以后使用
 		SlottedItemWidgets.Add(Availability.Index, ItemWidget);
+		UpdateGridSlot(Item, Availability.Index);
 	}
 }
+
 
 void UInv_InventoryGrid::ConstructGrid()
 {
@@ -92,12 +95,11 @@ void UInv_InventoryGrid::ConstructGrid()
 		{
 			UInv_GridSlot* GridSlot = CreateWidget<UInv_GridSlot>(this, GridSlotClass);
 			CanvasPanel->AddChild(GridSlot);
-			const FIntPoint RowColumn{i, j};
-			GridSlot->Index = UInv_WidgetUtils::GetIndexFromPosition(RowColumn, Column);
+			const FIntPoint ColumnRow{j, i};
+			GridSlot->Index = UInv_WidgetUtils::GetIndexFromPosition(ColumnRow, Column);
 			UCanvasPanelSlot* GridCPS = UWidgetLayoutLibrary::SlotAsCanvasSlot(GridSlot);
 			GridCPS->SetSize({TileSize, TileSize});
-			const FIntPoint Position{j, i};
-			GridCPS->SetPosition(Position * TileSize);
+			GridCPS->SetPosition(ColumnRow * TileSize);
 			GridSlots.Add(GridSlot);
 		}
 	}
@@ -106,4 +108,19 @@ void UInv_InventoryGrid::ConstructGrid()
 bool UInv_InventoryGrid::MatchesCategory(const UInv_InventoryItem* Item) const
 {
 	return Item->GetItemManifest().GetItemCategory() == ItemCategory;
+}
+
+void UInv_InventoryGrid::UpdateGridSlot(UInv_InventoryItem* Item, int32 Index)
+{
+	if (!GridSlots.IsValidIndex(Index))
+	{
+		UE_LOG(LogInventory, Error, TEXT("UpdateGridSlot Index无效"));
+		return;
+	}
+	const FInv_GridFragment* GridFragment = Item->GetItemManifest().GetFragmentOfType<FInv_GridFragment>();
+	UInv_InventoryStatics::ForEach2D(GridSlots,Index,Column,GridFragment->GetGridSize(),[](UInv_GridSlot* GridSlot)
+	{
+		GridSlot->SetOccupiedTexture();
+	});
+	GridSlots[Index]->SetOccupiedTexture();
 }
