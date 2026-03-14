@@ -2,3 +2,18 @@
 
 
 #include "Widget/Inventory/SlottedItem/Inv_SlottedItemWidget.h"
+
+#include "Components/TextBlock.h"
+
+void UInv_SlottedItemWidget::UpdateStackCount(int32 Count)
+{
+	if (bIsStackable)
+	{
+		TextBlock_Count->SetVisibility(ESlateVisibility::Visible);
+		TextBlock_Count->SetText(FText::AsNumber(Count));
+	}
+	else
+	{
+		TextBlock_Count->SetVisibility(ESlateVisibility::Collapsed);
+	}
+}

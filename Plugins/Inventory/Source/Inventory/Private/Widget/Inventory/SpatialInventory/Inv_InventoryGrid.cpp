@@ -44,11 +44,20 @@ FInv_SlotAvailabilityResult UInv_InventoryGrid::HasRoomForItem(const FInv_ItemMa
 {
 	FInv_SlotAvailabilityResult Result;
 	Result.TotalRoomToFill = 1;
+	Result.bStackable = true;
+	/**
+	 *测试代码
+	 */
 	FInv_SlotAvailability SlotAvailability;
-	SlotAvailability.AmountToFill = 1;
+	SlotAvailability.AmountToFill = 3;
 	SlotAvailability.bItemAtIndex = false;
 	SlotAvailability.Index = 0;
+	FInv_SlotAvailability SlotAvailability2;
+	SlotAvailability2.AmountToFill = 5;
+	SlotAvailability2.bItemAtIndex = false;
+	SlotAvailability2.Index = 1;
 	Result.SlotAvailabilities.Add(MoveTemp(SlotAvailability));
+	Result.SlotAvailabilities.Add(MoveTemp(SlotAvailability2));
 
 	return Result;
 }
@@ -63,15 +72,18 @@ void UInv_InventoryGrid::AddItemToIndices(const FInv_SlotAvailabilityResult& Res
 		if (!GridFragment || !IconFragment)return;
 		//创建并添加一个Widget
 		UInv_SlottedItemWidget* ItemWidget = CreateWidget<UInv_SlottedItemWidget>(GetOwningPlayer(), SlottedItemWidgetClass);
+		//设置ItemWidget的各个属性
 		ItemWidget->Item = Item;
 		ItemWidget->GridSize = GridFragment->GetGridSize();
+		ItemWidget->GridIndex = Availability.Index;
+		ItemWidget->bIsStackable = Result.bStackable;
+		ItemWidget->UpdateStackCount(Availability.AmountToFill);
 		FSlateBrush Brush;
 		Brush.SetResourceObject(IconFragment->GetIcon());
 		//计算物品图片大小
 		FVector2D IconSize = GridFragment->GetGridSize() * TileSize - 2 * GridFragment->GetGridPadding();
 		Brush.ImageSize = IconSize;
 		ItemWidget->GetImageIcon()->SetBrush(Brush);
-		ItemWidget->GridIndex = Availability.Index;
 		//将Widget添加到CanvasPanel
 		CanvasPanel->AddChild(ItemWidget);
 		UCanvasPanelSlot* ItemCPS = UWidgetLayoutLibrary::SlotAsCanvasSlot(ItemWidget);
@@ -81,7 +93,7 @@ void UInv_InventoryGrid::AddItemToIndices(const FInv_SlotAvailabilityResult& Res
 		ItemCPS->SetPosition(DrawPos);
 		//将Widget存储到一个容器中供以后使用
 		SlottedItemWidgets.Add(Availability.Index, ItemWidget);
-		UpdateGridSlot(Item, Availability.Index);
+		UpdateGridSlot(Item, Availability.Index, Result.bStackable, Availability.AmountToFill);
 	}
 }
 
@@ -110,17 +122,24 @@ bool UInv_InventoryGrid::MatchesCategory(const UInv_InventoryItem* Item) const
 	return Item->GetItemManifest().GetItemCategory() == ItemCategory;
 }
 
-void UInv_InventoryGrid::UpdateGridSlot(UInv_InventoryItem* Item, int32 Index)
+void UInv_InventoryGrid::UpdateGridSlot(UInv_InventoryItem* Item, int32 Index, bool bIsStackable, int32 StackCount)
 {
 	if (!GridSlots.IsValidIndex(Index))
 	{
 		UE_LOG(LogInventory, Error, TEXT("UpdateGridSlot Index无效"));
 		return;
 	}
+	if (bIsStackable)
+	{
+		GridSlots[Index]->StackCount = StackCount;
+	}
 	const FInv_GridFragment* GridFragment = Item->GetItemManifest().GetFragmentOfType<FInv_GridFragment>();
-	UInv_InventoryStatics::ForEach2D(GridSlots,Index,Column,GridFragment->GetGridSize(),[](UInv_GridSlot* GridSlot)
+	UInv_InventoryStatics::ForEach2D(GridSlots, Index, Column, GridFragment->GetGridSize(), [Index,Item](UInv_GridSlot* GridSlot)
 	{
 		GridSlot->SetOccupiedTexture();
+		GridSlot->UpperLeftIndex = Index;
+		GridSlot->Item = Item;
+		GridSlot->bAvailable = false;
 	});
 	GridSlots[Index]->SetOccupiedTexture();
 }

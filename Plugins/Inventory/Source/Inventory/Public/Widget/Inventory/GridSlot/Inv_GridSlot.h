@@ -4,6 +4,7 @@
 #include "Blueprint/UserWidget.h"
 #include "Inv_GridSlot.generated.h"
 
+class UInv_InventoryItem;
 class UImage;
 
 /**
@@ -34,6 +35,18 @@ class INVENTORY_API UInv_GridSlot : public UUserWidget
 public:
 	/** 网格槽位索引 */
 	int32 Index;
+
+	/** 该槽位存储的物品的数量 */
+	int32 StackCount{0};
+
+	/** 该槽位存储的物品的左上角槽位的索引 */
+	int32 UpperLeftIndex{INDEX_NONE};
+
+	/** 该槽位存储的道具 */
+	TWeakObjectPtr<UInv_InventoryItem> Item;
+
+	/** 该槽位是否可用 */
+	bool bAvailable{true};
 
 	void SetUnoccupiedTexture();
 

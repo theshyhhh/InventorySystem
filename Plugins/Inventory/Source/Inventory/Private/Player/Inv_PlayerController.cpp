@@ -27,7 +27,7 @@ void AInv_PlayerController::BeginPlay()
 	if (InputSubsystem)
 	{
 		InputSubsystem->AddMappingContext(DefaultIMC, 0);
-	}
+	} 
 	InventoryComponent = FindComponentByClass<UInv_InventoryComponent>();
 	CreateHUDWidget();
 }

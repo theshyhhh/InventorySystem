@@ -71,7 +71,7 @@ private:
 	/**
 	 * 当物品添加时，更新被占用的网格的样式
 	 */
-	void UpdateGridSlot(UInv_InventoryItem* Item, int32 Index);
+	void UpdateGridSlot(UInv_InventoryItem* Item, int32 Index, bool bIsStackable, int32 StackCount);
 
 	TWeakObjectPtr<UInv_InventoryComponent> InventoryComponent;
 
