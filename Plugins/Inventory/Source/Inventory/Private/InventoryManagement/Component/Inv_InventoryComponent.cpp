@@ -1,5 +1,6 @@
 ﻿#include "InventoryManagement/Component/Inv_InventoryComponent.h"
 
+#include "Item/Inv_InventoryItem.h"
 #include "Item/Component/Inv_ItemComponent.h"
 #include "Net/UnrealNetwork.h"
 #include "Widget/Inventory/InventoryBase/Inv_InventoryBaseWidget.h"
@@ -33,6 +34,8 @@ void UInv_InventoryComponent::ToggleInventoryMenu()
 void UInv_InventoryComponent::TryAddItem(UInv_ItemComponent* ItemComp)
 {
 	FInv_SlotAvailabilityResult Result = InventoryMenu->HasRoomForItem(ItemComp);
+	Result.Item = InventoryList.FindFirstItemByItemTag(ItemComp->GetItemManifest().GetItemTag());
+
 	if (Result.TotalRoomToFill == 0)
 	{
 		OnInventoryNoRoomDelegate.Broadcast();

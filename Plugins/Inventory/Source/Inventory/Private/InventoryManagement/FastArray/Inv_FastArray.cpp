@@ -72,3 +72,12 @@ TArray<UInv_InventoryItem*> FInv_InventoryFastArraySerializer::GetAllItems()
 	}
 	return Items;
 }
+
+UInv_InventoryItem* FInv_InventoryFastArraySerializer::FindFirstItemByItemTag(const FGameplayTag& ItemTag)
+{
+	FInv_InventoryEntry* Entry = Entries.FindByPredicate([&ItemTag](const FInv_InventoryEntry& Entry)
+	{
+		return IsValid(Entry.Item) && Entry.Item->GetItemManifest().GetItemTag().MatchesTagExact(ItemTag);
+	});
+	return Entry ? Entry->Item : nullptr;
+}

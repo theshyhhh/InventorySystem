@@ -57,7 +57,7 @@ FInv_SlotAvailabilityResult UInv_InventoryGrid::HasRoomForItem(const FInv_ItemMa
 		//如果GridSlot已被检查过，则跳过该格子，主要用于一个物品占用多个格子时会一次性检查这些格子，避免重复检查这几个格子
 		if (CheckedIndices.Contains(GridSlot->Index))continue;
 		//物品所占用的所有格子是否在边界内
-		if (IsInGridBounds(GridSlot->Index, GridFragment->GetGridSize()))continue;
+		if (!IsInGridBounds(GridSlot->Index, GridFragment->GetGridSize()))continue;
 		TSet<int32> TentativelyCheckedIndices;
 		//判断该格子是否还有空间装下对应尺寸的物品
 		if (!HasRoomAtIndex(GridSlot->Index, GridFragment->GetGridSize(), CheckedIndices, TentativelyCheckedIndices, Manifest.GetItemTag(),
@@ -100,7 +100,7 @@ bool UInv_InventoryGrid::CheckGridSlotConstraint(int32 SourceIndex, UInv_GridSlo
 {
 	if (CheckedIndices.Contains(GridSlot->Index))return false;
 	if (!GridSlot->Item.IsValid())return true;
-	//如果当前格子不是左上角的格子则返回false
+	//如果当前子格子的左上格子不是当前检测的格子则返回false
 	if (GridSlot->UpperLeftIndex != SourceIndex)return false;
 	//物品是否可堆叠
 	if (!GridSlot->Item->IsStackable())return false;

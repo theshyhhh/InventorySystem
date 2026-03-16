@@ -5,6 +5,7 @@
 
 #include "Inv_FastArray.generated.h"
 
+struct FGameplayTag;
 class UInv_ItemComponent;
 class UInv_InventoryItem;
 class UInv_InventoryComponent;
@@ -66,6 +67,8 @@ struct FInv_InventoryFastArraySerializer : public FFastArraySerializer
 	void RemoveEntry(UInv_InventoryItem* Item);
 
 	TArray<UInv_InventoryItem*> GetAllItems();
+
+	UInv_InventoryItem* FindFirstItemByItemTag(const FGameplayTag& ItemTag);
 
 private:
 	friend UInv_InventoryComponent;
