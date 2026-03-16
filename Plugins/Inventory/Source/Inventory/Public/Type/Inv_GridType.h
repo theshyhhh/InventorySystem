@@ -18,9 +18,6 @@ struct FInv_SlotAvailability
 {
 	GENERATED_BODY()
 
-	FInv_SlotAvailability()
-	{
-	}
 
 	//格子索引
 	int32 Index{INDEX_NONE};

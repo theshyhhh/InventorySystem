@@ -6,6 +6,7 @@
 
 #include "Inv_InventoryGrid.generated.h"
 
+struct FGameplayTag;
 class UInv_SlottedItemWidget;
 struct FInv_ItemManifest;
 class UInv_ItemComponent;
@@ -46,6 +47,29 @@ private:
 
 	FInv_SlotAvailabilityResult HasRoomForItem(const FInv_ItemManifest& Manifest);
 
+	bool HasRoomAtIndex(int32 Index, const FIntPoint& Range2D, const TSet<int32>& CheckedIndices, TSet<int32>& TentativelyIndices,
+	                    const FGameplayTag& ItemTag, int32 MaxStackSize);
+
+	/**
+	 * 用于检测二维范围内的格子
+	 * @param SourceIndex 当前检测的左上格子索引
+	 * @param GridSlot 当前检测的格子
+	 * @param CheckedIndices 检测过的格子
+	 * @param ItemTag 要添加的物品类型标签
+	 * @param MaxStackSize 当前要添加的物品的最大堆叠数
+	 * @return 是否符合约束
+	 */
+	bool CheckGridSlotConstraint(int32 SourceIndex, UInv_GridSlot* GridSlot, const TSet<int32>& CheckedIndices, const FGameplayTag& ItemTag,
+	                             int32 MaxStackSize);
+
+	/**
+	 * 
+	 * @param StartIndex 左上的起始索引
+	 * @param ItemDimensions 占用格子的列行
+	 * @return 所有格子是否都在边界
+	 */
+	bool IsInGridBounds(int32 StartIndex, const FIntPoint& ItemDimensions) const;
+
 	/**
 	 * @brief 根据结果中提供的可用槽位将物品添加到库存网格中。
 	 *
@@ -56,6 +80,16 @@ private:
 	 * @param Item 要添加到网格中的库存物品。
 	 */
 	void AddItemToIndices(const FInv_SlotAvailabilityResult& Result, UInv_InventoryItem* Item);
+
+	/**
+	 * 获取格子内道具的数量，如果格子不是左上的格子，则获取它的左上格子种道具的数量
+	 */
+	int32 GetSlotStackAmount(const UInv_GridSlot* GridSlot) const;
+
+	/***
+	 * 确定该格子可添加的物品的数量
+	 */
+	int32 DetermineFillAmountForSlot(bool bStackable, int32 MaxStackSize, int32 AmountToFill, const UInv_GridSlot* GridSlot) const;
 
 	/**
 	 * @brief 构建库存网格。
