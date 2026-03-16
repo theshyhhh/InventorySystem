@@ -1,5 +1,6 @@
 ﻿#include "InventoryManagement/Component/Inv_InventoryComponent.h"
 
+#include "Inventory.h"
 #include "Item/Inv_InventoryItem.h"
 #include "Item/Component/Inv_ItemComponent.h"
 #include "Net/UnrealNetwork.h"
@@ -65,6 +66,7 @@ void UInv_InventoryComponent::AddSubObject(UObject* SubObj)
 void UInv_InventoryComponent::Server_AddNewItem_Implementation(UInv_ItemComponent* ItemComp, int32 StackCount)
 {
 	UInv_InventoryItem* Item = InventoryList.AddEntry(ItemComp);
+	Item->TotalStackCount = StackCount;
 	if (GetOwner()->GetNetMode() == NM_ListenServer || GetOwner()->GetNetMode() == NM_Standalone)
 	{
 		//因为AddEntry时调用的PostReplicatedAdd只在复制到客户端时调用，所以这里要保证在监听服务器和单机下委托的广播
@@ -75,6 +77,13 @@ void UInv_InventoryComponent::Server_AddNewItem_Implementation(UInv_ItemComponen
 
 void UInv_InventoryComponent::Server_AddStacksToItem_Implementation(UInv_ItemComponent* ItemComp, int32 StackCount, int32 Remainder)
 {
+	UInv_InventoryItem* Item = InventoryList.FindFirstItemByItemTag(ItemComp->GetItemManifest().GetItemTag());
+	if (!IsValid(Item))
+	{
+		UE_LOG(LogInventory, Error, TEXT("InventoryList未找到有效的Item"));
+		return;
+	}
+	Item->TotalStackCount += StackCount;
 }
 
 void UInv_InventoryComponent::OpenInventoryMenu()

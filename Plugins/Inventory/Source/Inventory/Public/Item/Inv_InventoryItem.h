@@ -31,6 +31,10 @@ public:
 
 	bool IsStackable() const;
 
+	//所有可堆叠该类物品的数目总和，不可堆叠固定为1
+	UPROPERTY(Replicated)
+	int32 TotalStackCount{0};
+
 private:
 	//限制可选地结构体类型为FInv_ItemManifest和它的派生结构体
 	UPROPERTY(VisibleAnywhere, meta=(BaseStruct="/Script/Inventory.Inv_ItemManifest"), Replicated)
