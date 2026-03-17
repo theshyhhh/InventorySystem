@@ -3,6 +3,7 @@
 #include "Inventory.h"
 #include "Item/Inv_InventoryItem.h"
 #include "Item/Component/Inv_ItemComponent.h"
+#include "Item/Fragment/Inv_ItemFragment.h"
 #include "Net/UnrealNetwork.h"
 #include "Widget/Inventory/InventoryBase/Inv_InventoryBaseWidget.h"
 
@@ -45,6 +46,7 @@ void UInv_InventoryComponent::TryAddItem(UInv_ItemComponent* ItemComp)
 	if (Result.Item.IsValid() && Result.bStackable)
 	{
 		//如果库存中有该物品，且该物品可堆叠，则只需改变堆叠数量
+		OnItemStackChangeDelegate.Broadcast(Result);
 		Server_AddStacksToItem(ItemComp, Result.TotalRoomToFill, Result.Remainder);
 	}
 	else if (Result.TotalRoomToFill > 0)
@@ -72,7 +74,7 @@ void UInv_InventoryComponent::Server_AddNewItem_Implementation(UInv_ItemComponen
 		//因为AddEntry时调用的PostReplicatedAdd只在复制到客户端时调用，所以这里要保证在监听服务器和单机下委托的广播
 		OnItemAddedDelegate.Broadcast(Item);
 	}
-	//TODO: 摧毁地上的原物品
+	ItemComp->PickedUp();
 }
 
 void UInv_InventoryComponent::Server_AddStacksToItem_Implementation(UInv_ItemComponent* ItemComp, int32 StackCount, int32 Remainder)
@@ -84,6 +86,14 @@ void UInv_InventoryComponent::Server_AddStacksToItem_Implementation(UInv_ItemCom
 		return;
 	}
 	Item->TotalStackCount += StackCount;
+	if (Remainder == 0)
+	{
+		ItemComp->PickedUp();
+	}
+	else if (FInv_StackableFragment* StackableFragment = ItemComp->GetItemManifest().GetFragmentOfTypeMutable<FInv_StackableFragment>())
+	{
+		StackableFragment->SetStackCount(Remainder);
+	}
 }
 
 void UInv_InventoryComponent::OpenInventoryMenu()

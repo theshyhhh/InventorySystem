@@ -71,6 +71,11 @@ struct FInv_StackableFragment : public FInv_ItemFragment
 
 	FORCEINLINE int32 GetStackCount() const { return StackCount; }
 
+	void SetStackCount(int32 InStackCount)
+	{
+		StackCount = InStackCount;
+	}
+
 private:
 	/**最大可堆叠数量*/
 	UPROPERTY(EditAnywhere, Category="Inventory")

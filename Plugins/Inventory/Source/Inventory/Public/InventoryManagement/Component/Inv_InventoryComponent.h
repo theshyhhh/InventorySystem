@@ -6,12 +6,15 @@
 #include "Inv_InventoryComponent.generated.h"
 
 
+struct FInv_SlotAvailabilityResult;
 class UInv_ItemComponent;
 class UInv_InventoryBaseWidget;
 
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnInventoryItemChangeSignature, UInv_InventoryItem*, Item);
 
 DECLARE_DYNAMIC_MULTICAST_DELEGATE(FInventoryNoRoomSignature);
+
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnItemStackChangeSignature, const FInv_SlotAvailabilityResult&, Result);
 
 UCLASS(ClassGroup=(Custom), meta=(BlueprintSpawnableComponent), Blueprintable)
 class INVENTORY_API UInv_InventoryComponent : public UActorComponent
@@ -20,7 +23,7 @@ class INVENTORY_API UInv_InventoryComponent : public UActorComponent
 
 public:
 	UInv_InventoryComponent();
-	
+
 	virtual void GetLifetimeReplicatedProps(TArray<class FLifetimeProperty>& OutLifetimeProps) const override;
 
 	//切换库存菜单的显隐
@@ -46,6 +49,8 @@ public:
 	FOnInventoryItemChangeSignature OnItemRemovedDelegate;
 
 	FInventoryNoRoomSignature OnInventoryNoRoomDelegate;
+
+	FOnItemStackChangeSignature OnItemStackChangeDelegate;
 
 protected:
 	virtual void BeginPlay() override;

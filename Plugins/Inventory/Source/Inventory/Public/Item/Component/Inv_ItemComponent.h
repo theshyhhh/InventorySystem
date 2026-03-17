@@ -22,6 +22,12 @@ public:
 
 	FORCEINLINE FString GetPickUpMessage() const { return PickUpMessage; }
 
+	void PickedUp();
+
+protected:
+	UFUNCTION(BlueprintImplementableEvent, Category="Inventory")
+	void OnPickUp();
+
 private:
 	UPROPERTY(EditAnywhere, Replicated, Category="Inventory")
 	FInv_ItemManifest ItemManifest;

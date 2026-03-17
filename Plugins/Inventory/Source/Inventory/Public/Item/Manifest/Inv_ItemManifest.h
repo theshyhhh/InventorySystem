@@ -17,7 +17,7 @@ struct INVENTORY_API FInv_ItemManifest
 {
 	GENERATED_BODY()
 
-	UInv_InventoryItem* CreateItemByManifest(UObject* NewOuter);
+	UInv_InventoryItem* CreateItemByManifest(UObject* NewOuter) const;
 
 	EInv_ItemCategory GetItemCategory() const { return ItemCategory; }
 
@@ -25,6 +25,9 @@ struct INVENTORY_API FInv_ItemManifest
 
 	template <typename T> requires std::derived_from<T, FInv_ItemFragment>
 	const T* GetFragmentOfType() const;
+
+	template <typename T> requires std::derived_from<T, FInv_ItemFragment>
+	T* GetFragmentOfTypeMutable();
 
 private:
 	UPROPERTY(EditAnywhere, Category="Inventory")
@@ -43,6 +46,19 @@ const T* FInv_ItemManifest::GetFragmentOfType() const
 	for (const TInstancedStruct<FInv_ItemFragment>& Fragment : Fragments)
 	{
 		if (const T* FragmentPtr = Fragment.GetPtr<T>())
+		{
+			return FragmentPtr;
+		}
+	}
+	return nullptr;
+}
+
+template <typename T> requires std::derived_from<T, FInv_ItemFragment>
+T* FInv_ItemManifest::GetFragmentOfTypeMutable()
+{
+	for (TInstancedStruct<FInv_ItemFragment>& Fragment : Fragments)
+	{
+		if (T* FragmentPtr = Fragment.GetMutablePtr<T>())
 		{
 			return FragmentPtr;
 		}

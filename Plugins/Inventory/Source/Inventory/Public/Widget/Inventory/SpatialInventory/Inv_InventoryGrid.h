@@ -69,6 +69,7 @@ private:
 	 * @return 所有格子是否都在边界
 	 */
 	bool IsInGridBounds(int32 StartIndex, const FIntPoint& ItemDimensions) const;
+	void CreateAndAddItemWidget(const FInv_SlotAvailabilityResult& Result, UInv_InventoryItem* Item, const FInv_SlotAvailability& Availability);
 
 	/**
 	 * @brief 根据结果中提供的可用槽位将物品添加到库存网格中。
@@ -106,6 +107,10 @@ private:
 	 * 当物品添加时，更新被占用的网格的样式
 	 */
 	void UpdateGridSlot(UInv_InventoryItem* Item, int32 Index, bool bIsStackable, int32 StackCount);
+
+	//增加物品堆叠数目
+	UFUNCTION()
+	void AddItemStack(const FInv_SlotAvailabilityResult& Result);
 
 	TWeakObjectPtr<UInv_InventoryComponent> InventoryComponent;
 
