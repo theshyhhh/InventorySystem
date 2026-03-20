@@ -5,6 +5,12 @@
 
 #include "Components/TextBlock.h"
 
+FReply UInv_SlottedItemWidget::NativeOnMouseButtonDown(const FGeometry& InGeometry, const FPointerEvent& InMouseEvent)
+{
+	OnSlottedItemClickedDelegate.Broadcast(GridIndex, InMouseEvent);
+	return FReply::Handled();
+}
+
 void UInv_SlottedItemWidget::UpdateStackCount(int32 Count)
 {
 	if (bIsStackable)

@@ -6,6 +6,7 @@
 
 #include "Inv_InventoryGrid.generated.h"
 
+class UInv_HoverItem;
 struct FGameplayTag;
 class UInv_SlottedItemWidget;
 struct FInv_ItemManifest;
@@ -112,6 +113,19 @@ private:
 	UFUNCTION()
 	void AddItemStack(const FInv_SlotAvailabilityResult& Result);
 
+	/**
+	 * @brief 当鼠标点击道具时回调的函数
+	 * 
+	 * @param GridIndex 鼠标点击的道具的索引
+	 * @param MouseEvent 鼠标点击的相关信息
+	 */
+	UFUNCTION()
+	void OnSlottedItemClicked(int32 GridIndex, const FPointerEvent& MouseEvent);
+
+	void CreateHoverItem(const UInv_InventoryItem* Item, int32 GridIndex);
+
+	void RemoveItemFromGrid(UInv_InventoryItem* Item, int32 GridIndex);
+
 	TWeakObjectPtr<UInv_InventoryComponent> InventoryComponent;
 
 	UPROPERTY()
@@ -145,4 +159,17 @@ private:
 
 	UPROPERTY()
 	TMap<int32, TObjectPtr<UInv_SlottedItemWidget>> SlottedItemWidgets;
+
+	/**
+	 * 移动物品时创建的跟随鼠标移动的临时部件
+	 */
+	UPROPERTY()
+	TObjectPtr<UInv_HoverItem> HoverItem;
+
+	UPROPERTY(EditAnywhere, Category="Inventory")
+	TSubclassOf<UInv_HoverItem> HoverItemClass;
+
+	FInv_TileParameters CurrTileParams;
+
+	FInv_TileParameters PrevTileParams;
 };

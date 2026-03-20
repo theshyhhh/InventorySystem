@@ -11,6 +11,7 @@
 #include "Item/Component/Inv_ItemComponent.h"
 #include "Item/Fragment/Inv_ItemFragment.h"
 #include "Widget/Inventory/GridSlot/Inv_GridSlot.h"
+#include "Widget/Inventory/HoverItem/Inv_HoverItem.h"
 #include "Widget/Utils/Inv_WidgetUtils.h"
 #include "Widget/Inventory/SlottedItem/Inv_SlottedItemWidget.h"
 
@@ -135,6 +136,8 @@ void UInv_InventoryGrid::CreateAndAddItemWidget(const FInv_SlotAvailabilityResul
 	ItemWidget->GridIndex = Availability.Index;
 	ItemWidget->bIsStackable = Result.bStackable;
 	ItemWidget->UpdateStackCount(Availability.AmountToFill);
+	ItemWidget->OnSlottedItemClickedDelegate.AddDynamic(this, &ThisClass::OnSlottedItemClicked);
+
 	FSlateBrush Brush;
 	Brush.SetResourceObject(IconFragment->GetIcon());
 	//计算物品图片大小
@@ -240,5 +243,58 @@ void UInv_InventoryGrid::AddItemStack(const FInv_SlotAvailabilityResult& Result)
 			CreateAndAddItemWidget(Result, Result.Item.Get(), Availability);
 			UpdateGridSlot(Result.Item.Get(), Availability.Index, Result.bStackable, Availability.AmountToFill);
 		}
+	}
+}
+
+void UInv_InventoryGrid::OnSlottedItemClicked(int32 GridIndex, const FPointerEvent& MouseEvent)
+{
+	checkf(GridSlots.IsValidIndex(GridIndex), TEXT("OnSlottedItemClicked传入的索引值无效"));
+	if (!IsValid(HoverItem) && MouseEvent.GetEffectingButton() == EKeys::LeftMouseButton)
+	{
+		//创建悬浮部件
+		CreateHoverItem(GridSlots[GridIndex]->Item.Get(), GridIndex);
+		//从背包UI中移除道具
+		RemoveItemFromGrid(GridSlots[GridIndex]->Item.Get(), GridIndex);
+	}
+}
+
+void UInv_InventoryGrid::CreateHoverItem(const UInv_InventoryItem* Item, int32 GridIndex)
+{
+	HoverItem = CreateWidget<UInv_HoverItem>(GetOwningPlayer(), HoverItemClass);
+	//获取Item的GridFragment和ImageFragment
+	const FInv_GridFragment* GridFragment = Item->GetItemManifest().GetFragmentOfType<FInv_GridFragment>();
+	const FInv_IconFragment* IconFragment = Item->GetItemManifest().GetFragmentOfType<FInv_IconFragment>();
+	checkf(GridFragment&&GridFragment, TEXT("物品缺少格子布局属性和图标属性"))
+	//计算物品图片大小
+	FVector2D IconSize = GridFragment->GetGridSize() * TileSize - 2 * GridFragment->GetGridPadding();
+	FSlateBrush Brush;
+	Brush.SetResourceObject(IconFragment->GetIcon());
+	Brush.DrawAs = ESlateBrushDrawType::Image;
+	Brush.ImageSize = IconSize * UWidgetLayoutLibrary::GetViewportScale(this);
+	HoverItem->SetImageBrush(Brush);
+	HoverItem->GridDimensions = GridFragment->GetGridSize();
+	HoverItem->bIsStackable = Item->IsStackable();
+	HoverItem->PreviousGridIndex = GridIndex;
+	check(GridSlots.IsValidIndex(GridIndex))
+	HoverItem->UpdateStackCount(GridSlots[GridIndex]->StackCount);
+	GetOwningPlayer()->SetMouseCursorWidget(EMouseCursor::Default, HoverItem);
+}
+
+void UInv_InventoryGrid::RemoveItemFromGrid(UInv_InventoryItem* Item, int32 GridIndex)
+{
+	const FInv_GridFragment* GridFragment = Item->GetItemManifest().GetFragmentOfType<FInv_GridFragment>();
+	UInv_InventoryStatics::ForEach2D(GridSlots, GridIndex, Column, GridFragment->GetGridSize(), [GridIndex](UInv_GridSlot* GridSlot)
+	{
+		GridSlot->Item = nullptr;
+		GridSlot->StackCount = 0;
+		GridSlot->bAvailable = true;
+		GridSlot->UpperLeftIndex = INDEX_NONE;
+		GridSlot->SetUnoccupiedTexture();
+	});
+	if (SlottedItemWidgets.Contains(GridIndex))
+	{
+		TObjectPtr<UInv_SlottedItemWidget> SlottedItem;
+		SlottedItemWidgets.RemoveAndCopyValue(GridIndex, SlottedItem);
+		SlottedItem->RemoveFromParent();
 	}
 }

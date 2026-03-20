@@ -8,12 +8,16 @@ class UTextBlock;
 class UInv_InventoryItem;
 class UImage;
 
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_TwoParams(FOnSlottedItemClickedSignature, int32, GridIndex, const FPointerEvent&, MouseEvent);
+
 UCLASS()
 class INVENTORY_API UInv_SlottedItemWidget : public UUserWidget
 {
 	GENERATED_BODY()
 
 public:
+	virtual FReply NativeOnMouseButtonDown(const FGeometry& InGeometry, const FPointerEvent& InMouseEvent) override;
+
 	UImage* GetImageIcon() const { return Image_Icon; }
 
 	int32 GridIndex;
@@ -29,6 +33,8 @@ public:
 	 * @param Count 显示的数量
 	 */
 	void UpdateStackCount(int32 Count);
+
+	FOnSlottedItemClickedSignature OnSlottedItemClickedDelegate;
 
 private:
 	/**物品图标*/
