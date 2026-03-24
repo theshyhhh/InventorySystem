@@ -69,7 +69,7 @@ struct FInv_TileParameters
 	GENERATED_BODY()
 
 	UPROPERTY(BlueprintReadWrite, EditAnywhere, Category="Inventory")
-	FIntPoint TileCoordinates;
+	FIntPoint TileCoordinate;
 
 	UPROPERTY(BlueprintReadWrite, EditAnywhere, Category="Inventory")
 	int32 TileIndex{INDEX_NONE};
@@ -80,7 +80,22 @@ struct FInv_TileParameters
 
 inline bool operator==(const FInv_TileParameters& A, const FInv_TileParameters& B)
 {
-	return A.TileCoordinates == B.TileCoordinates
+	return A.TileCoordinate == B.TileCoordinate
 		&& A.TileIndex == B.TileIndex
 		&& A.TileQuadrant == B.TileQuadrant;
 }
+
+/**
+ * 移动物品时，对要放置的位置的查询结果
+ */
+USTRUCT()
+struct FInv_SpaceQueryResult
+{
+	GENERATED_BODY()
+
+	bool bHasSpace{true};
+
+	TWeakObjectPtr<UInv_InventoryItem> Item{nullptr};
+
+	int32 UpperLeftIndex{INDEX_NONE};
+};

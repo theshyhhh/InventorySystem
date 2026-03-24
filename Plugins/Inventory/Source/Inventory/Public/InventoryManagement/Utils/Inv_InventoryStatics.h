@@ -22,7 +22,7 @@ public:
 	UFUNCTION(BlueprintCallable, Category = "Inventory")
 	static EInv_ItemCategory GetItemCategoryFromItemComponent(const UInv_ItemComponent* ItemComp);
 
-	
+
 	/**
 	* @brief 对数组中指定的二维范围内的每个元素应用一个函数。
 	*
@@ -49,8 +49,8 @@ void UInv_InventoryStatics::ForEach2D(TArray<T>& Array, int32 Index, int32 Colum
 	{
 		for (int32 j = 0; j < Range2D.Y; j++)
 		{
-			FIntPoint Coordinate = UInv_WidgetUtils::GetPositionFromIndex(Index, ColumnNum) + FIntPoint(i, j);
-			int32 GridIndex = UInv_WidgetUtils::GetIndexFromPosition(Coordinate, ColumnNum);
+			FIntPoint Coordinate = UInv_WidgetUtils::GetCoordinateFromIndex(Index, ColumnNum) + FIntPoint(i, j);
+			int32 GridIndex = UInv_WidgetUtils::GetIndexFromCoordinate(Coordinate, ColumnNum);
 			if (Array.IsValidIndex(GridIndex))
 			{
 				Func(Array[GridIndex]);

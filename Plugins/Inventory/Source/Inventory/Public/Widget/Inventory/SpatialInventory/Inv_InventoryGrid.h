@@ -14,6 +14,7 @@ class UInv_ItemComponent;
 class UInv_InventoryComponent;
 class UCanvasPanel;
 class UInv_GridSlot;
+enum class EInv_GridSlotState : uint8;
 
 /**
  * @class UInv_InventoryGrid
@@ -30,6 +31,12 @@ class INVENTORY_API UInv_InventoryGrid : public UUserWidget
 public:
 	FORCEINLINE EInv_ItemCategory GetItemCategory() const { return ItemCategory; }
 
+	UFUNCTION()
+	void AddItem(UInv_InventoryItem* Item);
+
+	FInv_SlotAvailabilityResult HasRoomForItem(const UInv_ItemComponent* ItemComp);
+
+protected:
 	/**
 	 * @brief 初始化库存网格组件。
 	 *
@@ -38,12 +45,49 @@ public:
 	 */
 	virtual void NativeOnInitialized() override;
 
-	UFUNCTION()
-	void AddItem(UInv_InventoryItem* Item);
-
-	FInv_SlotAvailabilityResult HasRoomForItem(const UInv_ItemComponent* ItemComp);
+	virtual void NativeTick(const FGeometry& MyGeometry, float InDeltaTime) override;
 
 private:
+	/**
+	 * 更新CurrTileParams和PrevTileParams
+	 * @param CanvasPos 画布左上角的位置
+	 * @param MousePos 鼠标位置
+	 */
+	void UpdateTileParams(const FVector2D& CanvasPos, const FVector2D& MousePos);
+
+	void OnTileParamsUpdated();
+
+	/**
+	 * 
+	 * @param CurrTileCoord 当前鼠标指向的格子坐标
+	 * @param Dimension 物品占用布局
+	 * @param TileQuadrant 鼠标位于当前格子的哪一象限
+	 * @return 起始位置坐标
+	 */
+	FIntPoint CalculateStartingCoordinate(const FIntPoint& CurrTileCoord, const FIntPoint& Dimension, EInv_TileQuadrant TileQuadrant);
+
+	/**
+	 * 
+	 * @param CanvasPos 画布左上角的位置
+	 * @param MousePos 鼠标位置
+	 * @return 返回鼠标指向的格子的坐标(列行)
+	 */
+	FIntPoint CalculateMouseCoordinate(const FVector2D& CanvasPos, const FVector2D& MousePos) const;
+
+	//计算当前鼠标位于指向的格子的哪个象限
+	EInv_TileQuadrant CalculateTileQuadrant(const FVector2D& CanvasPos, const FVector2D& MousePos) const;
+
+	//检查当前指向格子的存储情况
+	FInv_SpaceQueryResult CheckHoverCoordinate(const FIntPoint& Coord, const FIntPoint& Dimension);
+
+	//返回鼠标是否这一帧离开了Canvas
+	bool CursorExitedCanvas(const FVector2D& BoundaryPos, const FVector2D& BoundarySize, const FVector2D& Location);
+
+	void HighlightGridSlots(int32 Index, const FIntPoint& Dimensions);
+	void UnhighlightGridSlots(int32 Index, const FIntPoint& Dimensions);
+
+	void ChangeHoverType(int32 Index, const FIntPoint& Dimensions, EInv_GridSlotState GridSlotState);
+
 	FInv_SlotAvailabilityResult HasRoomForItem(const UInv_InventoryItem* Item);
 
 	FInv_SlotAvailabilityResult HasRoomForItem(const FInv_ItemManifest& Manifest);
@@ -60,7 +104,7 @@ private:
 	 * @param MaxStackSize 当前要添加的物品的最大堆叠数
 	 * @return 是否符合约束
 	 */
-	bool CheckGridSlotConstraint(int32 SourceIndex, UInv_GridSlot* GridSlot, const TSet<int32>& CheckedIndices, const FGameplayTag& ItemTag,
+	bool CheckGridSlotConstraint(int32 SourceIndex, const UInv_GridSlot* GridSlot, const TSet<int32>& CheckedIndices, const FGameplayTag& ItemTag,
 	                             int32 MaxStackSize);
 
 	/**
@@ -124,7 +168,7 @@ private:
 
 	void CreateHoverItem(const UInv_InventoryItem* Item, int32 GridIndex);
 
-	void RemoveItemFromGrid(UInv_InventoryItem* Item, int32 GridIndex);
+	void RemoveItemFromGrid(const UInv_InventoryItem* Item, int32 GridIndex);
 
 	TWeakObjectPtr<UInv_InventoryComponent> InventoryComponent;
 
@@ -172,4 +216,21 @@ private:
 	FInv_TileParameters CurrTileParams;
 
 	FInv_TileParameters PrevTileParams;
+
+	/**
+	 * 移动物品时，物品将要存放的索引，随鼠标位置改变
+	 */
+	int32 ItemDropIndex{INDEX_NONE};
+
+	FInv_SpaceQueryResult CurrQueryResult;
+
+	bool bCurrMouseWithinCanvas;
+
+	bool bPrevMouseWithinCanvas;
+
+	//最后一次高亮的索引
+	int32 LastHighlightIndex;
+
+	//最后一次高亮的布局
+	FIntPoint LastHighlightDimension;
 };
