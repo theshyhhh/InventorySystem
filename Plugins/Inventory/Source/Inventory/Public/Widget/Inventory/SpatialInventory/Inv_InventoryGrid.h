@@ -36,6 +36,12 @@ public:
 
 	FInv_SlotAvailabilityResult HasRoomForItem(const UInv_ItemComponent* ItemComp);
 
+	//显示鼠标
+	void ShowCursor();
+
+	//隐藏鼠标
+	void HideCursor();
+
 protected:
 	/**
 	 * @brief 初始化库存网格组件。
@@ -114,7 +120,7 @@ private:
 	 * @return 所有格子是否都在边界
 	 */
 	bool IsInGridBounds(int32 StartIndex, const FIntPoint& ItemDimensions) const;
-	void CreateAndAddItemWidget(const FInv_SlotAvailabilityResult& Result, UInv_InventoryItem* Item, const FInv_SlotAvailability& Availability);
+	void CreateAndAddItemWidget(bool bStackable, UInv_InventoryItem* Item, int32 Index, int32 StackCount);
 
 	/**
 	 * @brief 根据结果中提供的可用槽位将物品添加到库存网格中。
@@ -166,9 +172,41 @@ private:
 	UFUNCTION()
 	void OnSlottedItemClicked(int32 GridIndex, const FPointerEvent& MouseEvent);
 
-	void CreateHoverItem(const UInv_InventoryItem* Item, int32 GridIndex);
+	void SwapWithHoverItem(UInv_InventoryItem* Item, int32 GridIndex);
+
+	void CreateHoverItem(UInv_InventoryItem* Item, int32 GridIndex);
 
 	void RemoveItemFromGrid(const UInv_InventoryItem* Item, int32 GridIndex);
+
+	/**
+	 * 清空HoverItem并显示鼠标
+	 */
+	void ClearHoverItem();
+
+	UFUNCTION()
+	void OnGridSlotClicked(int32 GridIndex, const FPointerEvent& MouseEvent);
+
+	UFUNCTION()
+	void OnGridSlotHovered(int32 GridIndex, const FPointerEvent& MouseEvent);
+
+	UFUNCTION()
+	void OnGridSlotUnhovered(int32 GridIndex, const FPointerEvent& MouseEvent);
+
+	UUserWidget* GetVisibleCursorWidget();
+
+	UUserWidget* GetHiddenCursorWidget();
+
+	UPROPERTY(EditAnywhere, Category="Inventory")
+	TSubclassOf<UUserWidget> VisibleCursorWidgetClass;
+
+	UPROPERTY(EditAnywhere, Category="Inventory")
+	TSubclassOf<UUserWidget> HiddenCursorWidgetClass;
+
+	UPROPERTY()
+	TObjectPtr<UUserWidget> VisibleCursorWidget;
+
+	UPROPERTY()
+	TObjectPtr<UUserWidget> HiddenCursorWidget;
 
 	TWeakObjectPtr<UInv_InventoryComponent> InventoryComponent;
 
@@ -204,6 +242,8 @@ private:
 	UPROPERTY()
 	TMap<int32, TObjectPtr<UInv_SlottedItemWidget>> SlottedItemWidgets;
 
+	//都是移动物品时使用 begin
+
 	/**
 	 * 移动物品时创建的跟随鼠标移动的临时部件
 	 */
@@ -233,4 +273,5 @@ private:
 
 	//最后一次高亮的布局
 	FIntPoint LastHighlightDimension;
+	//都是移动物品时使用 end
 };

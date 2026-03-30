@@ -53,4 +53,5 @@ void UInv_SpatialInventoryWidget::SetActiveGrid(UInv_InventoryGrid* InventoryGri
 	Button_Craftable->SetIsEnabled(true);
 	Button->SetIsEnabled(false);
 	GridSwitcher->SetActiveWidget(InventoryGrid);
+	InventoryGrid->ShowCursor();
 }

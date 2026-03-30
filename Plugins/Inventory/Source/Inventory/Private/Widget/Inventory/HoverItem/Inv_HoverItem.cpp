@@ -11,6 +11,7 @@ void UInv_HoverItem::SetImageBrush(const FSlateBrush& Brush)
 
 void UInv_HoverItem::UpdateStackCount(int32 Count)
 {
+	StackCount = Count;
 	if (bIsStackable)
 	{
 		TextBlock_StackCount->SetText(FText::AsNumber(Count));

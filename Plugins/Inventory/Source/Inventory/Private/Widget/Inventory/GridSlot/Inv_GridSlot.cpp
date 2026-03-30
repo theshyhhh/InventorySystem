@@ -25,3 +25,21 @@ void UInv_GridSlot::SetGrayedOutTexture()
 	Image_GridSlot->SetBrush(Brush_GrayedOut);
 	State = EInv_GridSlotState::GrayedOut;
 }
+
+void UInv_GridSlot::NativeOnMouseEnter(const FGeometry& InGeometry, const FPointerEvent& InMouseEvent)
+{
+	Super::NativeOnMouseEnter(InGeometry, InMouseEvent);
+	OnGridSlotHoveredDelegate.Broadcast(Index, InMouseEvent);
+}
+
+void UInv_GridSlot::NativeOnMouseLeave(const FPointerEvent& InMouseEvent)
+{
+	Super::NativeOnMouseLeave(InMouseEvent);
+	OnGridSlotUnhoveredDelegate.Broadcast(Index, InMouseEvent);
+}
+
+FReply UInv_GridSlot::NativeOnMouseButtonDown(const FGeometry& InGeometry, const FPointerEvent& InMouseEvent)
+{
+	OnGridSlotClickedDelegate.Broadcast(Index, InMouseEvent);
+	return FReply::Handled();
+}

@@ -29,6 +29,9 @@ void UInv_InventoryGrid::NativeTick(const FGeometry& MyGeometry, float InDeltaTi
 	Super::NativeTick(MyGeometry, InDeltaTime);
 	FVector2D CanvasPos = UInv_WidgetUtils::GetWidgetPosition(CanvasPanel);
 	FVector2D MousePos = UWidgetLayoutLibrary::GetMousePositionOnViewport(GetOwningPlayer());
+	GEngine->AddOnScreenDebugMessage(0, 5.f, FColor::Red, FString::Printf(TEXT("%s"), *CanvasPos.ToString()));
+	GEngine->AddOnScreenDebugMessage(1, 5.f, FColor::Red, FString::Printf(TEXT("%s"), *MousePos.ToString()));
+	GEngine->AddOnScreenDebugMessage(2, 5.f, FColor::Red, FString::Printf(TEXT("%s"), *UInv_WidgetUtils::GetWidgetSize(CanvasPanel).ToString()));
 	if (CursorExitedCanvas(CanvasPos, UInv_WidgetUtils::GetWidgetSize(CanvasPanel), MousePos))
 	{
 		return;
@@ -151,7 +154,8 @@ FInv_SpaceQueryResult UInv_InventoryGrid::CheckHoverCoordinate(const FIntPoint& 
 bool UInv_InventoryGrid::CursorExitedCanvas(const FVector2D& BoundaryPos, const FVector2D& BoundarySize, const FVector2D& Location)
 {
 	bPrevMouseWithinCanvas = bCurrMouseWithinCanvas;
-	bCurrMouseWithinCanvas = UInv_WidgetUtils::IsWithinBounds(BoundaryPos, BoundaryPos, Location);
+	bCurrMouseWithinCanvas = UInv_WidgetUtils::IsWithinBounds(BoundaryPos, BoundarySize, Location);
+	GEngine->AddOnScreenDebugMessage(3, 5.f, FColor::Red, FString::Printf(TEXT("%d"), bCurrMouseWithinCanvas));
 	if (!bCurrMouseWithinCanvas && bPrevMouseWithinCanvas)
 	{
 		UnhighlightGridSlots(LastHighlightIndex, LastHighlightDimension);
@@ -311,8 +315,7 @@ bool UInv_InventoryGrid::IsInGridBounds(int32 StartIndex, const FIntPoint& ItemD
 	return EndColumn < Column && EndRow < Row;
 }
 
-void UInv_InventoryGrid::CreateAndAddItemWidget(const FInv_SlotAvailabilityResult& Result, UInv_InventoryItem* Item,
-                                                const FInv_SlotAvailability& Availability)
+void UInv_InventoryGrid::CreateAndAddItemWidget(bool bStackable, UInv_InventoryItem* Item, int32 Index, int32 StackCount)
 {
 	//获取Item的GridFragment和ImageFragment
 	const FInv_GridFragment* GridFragment = Item->GetItemManifest().GetFragmentOfType<FInv_GridFragment>();
@@ -323,9 +326,9 @@ void UInv_InventoryGrid::CreateAndAddItemWidget(const FInv_SlotAvailabilityResul
 	//设置ItemWidget的各个属性
 	ItemWidget->Item = Item;
 	ItemWidget->GridSize = GridFragment->GetGridSize();
-	ItemWidget->GridIndex = Availability.Index;
-	ItemWidget->bIsStackable = Result.bStackable;
-	ItemWidget->UpdateStackCount(Availability.AmountToFill);
+	ItemWidget->GridIndex = Index;
+	ItemWidget->bIsStackable = bStackable;
+	ItemWidget->UpdateStackCount(StackCount);
 	ItemWidget->OnSlottedItemClickedDelegate.AddDynamic(this, &ThisClass::OnSlottedItemClicked);
 
 	FSlateBrush Brush;
@@ -342,14 +345,14 @@ void UInv_InventoryGrid::CreateAndAddItemWidget(const FInv_SlotAvailabilityResul
 	const FVector2D DrawPos = UInv_WidgetUtils::GetCoordinateFromIndex(ItemWidget->GridIndex, Column) * TileSize + GridFragment->GetGridPadding();
 	ItemCPS->SetPosition(DrawPos);
 	//将Widget存储到一个容器中供以后使用
-	SlottedItemWidgets.Add(Availability.Index, ItemWidget);
+	SlottedItemWidgets.Add(Index, ItemWidget);
 }
 
 void UInv_InventoryGrid::AddItemToIndices(const FInv_SlotAvailabilityResult& Result, UInv_InventoryItem* Item)
 {
 	for (const auto& Availability : Result.SlotAvailabilities)
 	{
-		CreateAndAddItemWidget(Result, Item, Availability);
+		CreateAndAddItemWidget(Result.bStackable, Item, Availability.Index, Availability.AmountToFill);
 		UpdateGridSlot(Item, Availability.Index, Result.bStackable, Availability.AmountToFill);
 	}
 }
@@ -386,6 +389,9 @@ void UInv_InventoryGrid::ConstructGrid()
 			GridCPS->SetSize({TileSize, TileSize});
 			GridCPS->SetPosition(ColumnRow * TileSize);
 			GridSlots.Add(GridSlot);
+			GridSlot->OnGridSlotClickedDelegate.AddDynamic(this, &UInv_InventoryGrid::OnGridSlotClicked);
+			GridSlot->OnGridSlotHoveredDelegate.AddDynamic(this, &UInv_InventoryGrid::OnGridSlotHovered);
+			GridSlot->OnGridSlotUnhoveredDelegate.AddDynamic(this, &UInv_InventoryGrid::OnGridSlotUnhovered);
 		}
 	}
 }
@@ -430,7 +436,7 @@ void UInv_InventoryGrid::AddItemStack(const FInv_SlotAvailabilityResult& Result)
 		}
 		else
 		{
-			CreateAndAddItemWidget(Result, Result.Item.Get(), Availability);
+			CreateAndAddItemWidget(Result.bStackable, Result.Item.Get(), Availability.Index, Availability.AmountToFill);
 			UpdateGridSlot(Result.Item.Get(), Availability.Index, Result.bStackable, Availability.AmountToFill);
 		}
 	}
@@ -445,10 +451,56 @@ void UInv_InventoryGrid::OnSlottedItemClicked(int32 GridIndex, const FPointerEve
 		CreateHoverItem(GridSlots[GridIndex]->Item.Get(), GridIndex);
 		//从背包UI中移除道具
 		RemoveItemFromGrid(GridSlots[GridIndex]->Item.Get(), GridIndex);
+		return;
 	}
+	if (HoverItem->Item->GetItemManifest().GetItemTag().MatchesTagExact(GridSlots[GridIndex]->Item->GetItemManifest().GetItemTag())
+		&& HoverItem->Item->IsStackable())
+	{
+		const int32 ClickedStackCount = GridSlots[GridIndex]->StackCount;
+		const FInv_StackableFragment* StackableFragment = GridSlots[GridIndex]->Item->GetItemManifest().GetFragmentOfType<FInv_StackableFragment>();
+		const int32 MaxStackCount = StackableFragment->GetMaxStackSize();
+		const int32 RoomInClickedSlot = MaxStackCount - ClickedStackCount;
+		const int32 HoverStackCount = HoverItem->GetStackCount();
+		if (RoomInClickedSlot == 0 && HoverStackCount < MaxStackCount)
+		{
+			//交换物品的数量
+			GridSlots[GridIndex]->StackCount = HoverStackCount;
+			SlottedItemWidgets[GridIndex]->UpdateStackCount(HoverStackCount);
+			HoverItem->UpdateStackCount(ClickedStackCount);
+		}
+		else if (RoomInClickedSlot >= HoverStackCount)
+		{
+			GridSlots[GridIndex]->StackCount += HoverStackCount;
+			SlottedItemWidgets[GridIndex]->UpdateStackCount(GridSlots[GridIndex]->StackCount);
+			ClearHoverItem();
+
+			ChangeHoverType(GridIndex, GridSlots[GridIndex]->Item->GetItemManifest().GetFragmentOfType<FInv_GridFragment>()->GetGridSize(),
+			                EInv_GridSlotState::Occupied);
+		}
+		else if (RoomInClickedSlot > 0 && RoomInClickedSlot < HoverStackCount)
+		{
+			GridSlots[GridIndex]->StackCount = MaxStackCount;
+			SlottedItemWidgets[GridIndex]->UpdateStackCount(MaxStackCount);
+			HoverItem->UpdateStackCount(HoverStackCount - RoomInClickedSlot);
+		}
+		return;
+	}
+	SwapWithHoverItem(GridSlots[GridIndex]->Item.Get(), GridIndex);
 }
 
-void UInv_InventoryGrid::CreateHoverItem(const UInv_InventoryItem* Item, int32 GridIndex)
+void UInv_InventoryGrid::SwapWithHoverItem(UInv_InventoryItem* Item, int32 GridIndex)
+{
+	if (!IsValid(HoverItem))return;
+	UInv_InventoryItem* TempItem = HoverItem->Item.Get();
+	const int32 TempStackCount = HoverItem->GetStackCount();
+	const bool bTempIsStackable = HoverItem->bIsStackable;
+	CreateHoverItem(Item, GridIndex);
+	RemoveItemFromGrid(Item, GridIndex);
+	CreateAndAddItemWidget(bTempIsStackable, TempItem, ItemDropIndex, TempStackCount);
+	UpdateGridSlot(TempItem, ItemDropIndex, bTempIsStackable, TempStackCount);
+}
+
+void UInv_InventoryGrid::CreateHoverItem(UInv_InventoryItem* Item, int32 GridIndex)
 {
 	HoverItem = CreateWidget<UInv_HoverItem>(GetOwningPlayer(), HoverItemClass);
 	//获取Item的GridFragment和ImageFragment
@@ -465,6 +517,7 @@ void UInv_InventoryGrid::CreateHoverItem(const UInv_InventoryItem* Item, int32 G
 	HoverItem->GridDimensions = GridFragment->GetGridSize();
 	HoverItem->bIsStackable = Item->IsStackable();
 	HoverItem->PreviousGridIndex = GridIndex;
+	HoverItem->Item = Item;
 	check(GridSlots.IsValidIndex(GridIndex))
 	HoverItem->UpdateStackCount(GridSlots[GridIndex]->StackCount);
 	GetOwningPlayer()->SetMouseCursorWidget(EMouseCursor::Default, HoverItem);
@@ -487,4 +540,81 @@ void UInv_InventoryGrid::RemoveItemFromGrid(const UInv_InventoryItem* Item, int3
 		SlottedItemWidgets.RemoveAndCopyValue(GridIndex, SlottedItem);
 		SlottedItem->RemoveFromParent();
 	}
+}
+
+void UInv_InventoryGrid::ClearHoverItem()
+{
+	//移除随鼠标移动的临时物品图标
+	HoverItem->RemoveFromParent();
+	HoverItem = nullptr;
+	//显示鼠标
+	ShowCursor();
+}
+
+void UInv_InventoryGrid::OnGridSlotClicked(int32 GridIndex, const FPointerEvent& MouseEvent)
+{
+	if (!IsValid(HoverItem))return;
+	if (!GridSlots.IsValidIndex(ItemDropIndex))return;
+	if (CurrQueryResult.Item.IsValid() && GridSlots.IsValidIndex(CurrQueryResult.UpperLeftIndex))
+	{
+		OnSlottedItemClicked(CurrQueryResult.UpperLeftIndex, MouseEvent);
+		return;
+	}
+	if (CurrQueryResult.bHasSpace)
+	{
+		//放置物品
+		CreateAndAddItemWidget(HoverItem->bIsStackable, HoverItem->Item.Get(), ItemDropIndex, HoverItem->GetStackCount());
+		UpdateGridSlot(HoverItem->Item.Get(), ItemDropIndex, HoverItem->bIsStackable, HoverItem->GetStackCount());
+		ClearHoverItem();
+	}
+}
+
+void UInv_InventoryGrid::OnGridSlotHovered(int32 GridIndex, const FPointerEvent& MouseEvent)
+{
+	if (IsValid(HoverItem))return;
+	if (GridSlots[GridIndex]->bAvailable)
+	{
+		GridSlots[GridIndex]->SetOccupiedTexture();
+	}
+}
+
+void UInv_InventoryGrid::OnGridSlotUnhovered(int32 GridIndex, const FPointerEvent& MouseEvent)
+{
+	if (IsValid(HoverItem))return;
+	if (GridSlots[GridIndex]->bAvailable)
+	{
+		GridSlots[GridIndex]->SetUnoccupiedTexture();
+	}
+}
+
+UUserWidget* UInv_InventoryGrid::GetVisibleCursorWidget()
+{
+	if (!IsValid(GetOwningPlayer()))return nullptr;
+	if (!IsValid(VisibleCursorWidget))
+	{
+		VisibleCursorWidget = CreateWidget(GetOwningPlayer(), VisibleCursorWidgetClass);
+	}
+	return VisibleCursorWidget;
+}
+
+UUserWidget* UInv_InventoryGrid::GetHiddenCursorWidget()
+{
+	if (!IsValid(GetOwningPlayer()))return nullptr;
+	if (!IsValid(HiddenCursorWidget))
+	{
+		HiddenCursorWidget = CreateWidget(GetOwningPlayer(), HiddenCursorWidgetClass);
+	}
+	return HiddenCursorWidget;
+}
+
+void UInv_InventoryGrid::ShowCursor()
+{
+	if (!IsValid(GetOwningPlayer()))return;
+	GetOwningPlayer()->SetMouseCursorWidget(EMouseCursor::Default, GetVisibleCursorWidget());
+}
+
+void UInv_InventoryGrid::HideCursor()
+{
+	if (!IsValid(GetOwningPlayer()))return;
+	GetOwningPlayer()->SetMouseCursorWidget(EMouseCursor::Default, GetHiddenCursorWidget());
 }
