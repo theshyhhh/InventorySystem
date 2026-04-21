@@ -1,6 +1,7 @@
 ﻿#include "InventoryManagement/Component/Inv_InventoryComponent.h"
 
 #include "Inventory.h"
+#include "InventoryManagement/Utils/Inv_InventoryStatics.h"
 #include "Item/Inv_InventoryItem.h"
 #include "Item/Component/Inv_ItemComponent.h"
 #include "Item/Fragment/Inv_ItemFragment.h"
@@ -54,6 +55,38 @@ void UInv_InventoryComponent::TryAddItem(UInv_ItemComponent* ItemComp)
 		//如果库存中没有该物品，或该物品不可堆叠，则需要创建这个物品，并更新格子显示的内容
 		Server_AddNewItem(ItemComp, Result.bStackable ? Result.TotalRoomToFill : 0);
 	}
+}
+
+void UInv_InventoryComponent::Server_DropItem_Implementation(UInv_InventoryItem* Item, int32 StackCount)
+{
+	const int32 NewStackCount = Item->TotalStackCount - StackCount;
+	if (NewStackCount <= 0)
+	{
+		InventoryList.RemoveEntry(Item);
+	}
+	else
+	{
+		Item->TotalStackCount = NewStackCount;
+	}
+	//生成丢弃后的物品
+	SpawnDroppedItem(Item, StackCount);
+}
+
+void UInv_InventoryComponent::SpawnDroppedItem(const UInv_InventoryItem* Item, int32 Count) const
+{
+	const APawn* OwningPawn = OwningPlayerController->GetPawn();
+	check(OwningPawn);
+	FVector RotatedForward = OwningPawn->GetActorForwardVector().
+	                                     RotateAngleAxis(FMath::RandRange(-SpawnItemAngle, SpawnItemAngle), FVector::UpVector);
+	FVector SpawnLocation = RotatedForward * FMath::RandRange(MinSpawnDistance, MaxSpawnDistance) + OwningPawn->GetActorLocation();
+	SpawnLocation.Z += SpawnHeight;
+	FInv_ItemManifest ItemManifest = Item->GetItemManifest();
+	if (FInv_StackableFragment* StackableFragment = ItemManifest.GetFragmentOfTypeMutable<FInv_StackableFragment>())
+	{
+		StackableFragment->SetStackCount(Count);
+	}
+
+	UInv_InventoryStatics::SpawnItemByItemManifest(this, ItemManifest, SpawnLocation, RotatedForward.Rotation());
 }
 
 void UInv_InventoryComponent::AddSubObject(UObject* SubObj)

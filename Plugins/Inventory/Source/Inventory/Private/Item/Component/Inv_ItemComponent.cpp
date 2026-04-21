@@ -18,3 +18,8 @@ void UInv_ItemComponent::PickedUp()
 	OnPickUp();
 	GetOwner()->Destroy();
 }
+
+void UInv_ItemComponent::SetItemManifest(FInv_ItemManifest InItemManifest)
+{
+	ItemManifest = MoveTemp(InItemManifest);
+}

@@ -6,6 +6,7 @@
 
 #include "Inv_InventoryGrid.generated.h"
 
+class UInv_ItemPopUpWidget;
 class UInv_HoverItem;
 struct FGameplayTag;
 class UInv_SlottedItemWidget;
@@ -41,6 +42,13 @@ public:
 
 	//隐藏鼠标
 	void HideCursor();
+
+	void SetOwningCanvasPanel(UCanvasPanel* InCanvasPanel);
+
+	/**
+	 * 丢弃悬浮中的物品
+	 */
+	void DropHoverItem();
 
 protected:
 	/**
@@ -172,6 +180,7 @@ private:
 	UFUNCTION()
 	void OnSlottedItemClicked(int32 GridIndex, const FPointerEvent& MouseEvent);
 
+	//交换物品
 	void SwapWithHoverItem(UInv_InventoryItem* Item, int32 GridIndex);
 
 	void CreateHoverItem(UInv_InventoryItem* Item, int32 GridIndex);
@@ -274,4 +283,21 @@ private:
 	//最后一次高亮的布局
 	FIntPoint LastHighlightDimension;
 	//都是移动物品时使用 end
+
+	UPROPERTY()
+	TObjectPtr<UInv_ItemPopUpWidget> ItemPopUpMenu;
+
+	UPROPERTY(EditAnywhere, Category="Inventory")
+	TSubclassOf<UInv_ItemPopUpWidget> ItemPopUpMenuClass;
+
+	TWeakObjectPtr<UCanvasPanel> OwningCanvasPanel;
+
+	UPROPERTY(EditAnywhere, Category="Inventory")
+	FVector2D ItemPopMenuOffset;
+
+	void SplitItem(int32 SplitAmount, int32 GridIndex);
+
+	void ConsumeItem(int32 GridIndex);
+
+	void DropItem(int32 GridIndex);
 };

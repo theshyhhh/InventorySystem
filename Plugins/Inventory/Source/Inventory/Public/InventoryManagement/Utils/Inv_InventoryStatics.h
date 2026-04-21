@@ -6,6 +6,7 @@
 #include "Widget/Utils/Inv_WidgetUtils.h"
 #include "Inv_InventoryStatics.generated.h"
 
+struct FInv_ItemManifest;
 class UInv_ItemComponent;
 class UInv_InventoryComponent;
 
@@ -22,7 +23,9 @@ public:
 	UFUNCTION(BlueprintCallable, Category = "Inventory")
 	static EInv_ItemCategory GetItemCategoryFromItemComponent(const UInv_ItemComponent* ItemComp);
 
-
+	UFUNCTION(BlueprintCallable, Category = "Inventory")
+	static AActor* SpawnItemByItemManifest(const UObject* WorldContextObject, const FInv_ItemManifest& ItemManifest, const FVector& SpawnLocation,
+	                                       const FRotator& SpawnRotation);
 	/**
 	* @brief 对数组中指定的二维范围内的每个元素应用一个函数。
 	*

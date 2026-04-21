@@ -24,6 +24,8 @@ public:
 
 	void PickedUp();
 
+	void SetItemManifest(FInv_ItemManifest InItemManifest);
+
 protected:
 	UFUNCTION(BlueprintImplementableEvent, Category="Inventory")
 	void OnPickUp();

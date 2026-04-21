@@ -4,6 +4,7 @@
 #include "Widget/Inventory/InventoryBase/Inv_InventoryBaseWidget.h"
 #include "Inv_SpatialInventoryWidget.generated.h"
 
+class UCanvasPanel;
 class UButton;
 class UWidgetSwitcher;
 class UInv_InventoryGrid;
@@ -14,9 +15,12 @@ class INVENTORY_API UInv_SpatialInventoryWidget : public UInv_InventoryBaseWidge
 	GENERATED_BODY()
 
 public:
-	virtual void NativeOnInitialized() override;
-	
 	virtual FInv_SlotAvailabilityResult HasRoomForItem(UInv_ItemComponent* ItemComp) override;
+
+protected:
+	virtual void NativeOnInitialized() override;
+
+	virtual FReply NativeOnMouseButtonDown(const FGeometry& InGeometry, const FPointerEvent& InMouseEvent) override;
 
 private:
 	UPROPERTY(meta=(BindWidget))
@@ -40,6 +44,9 @@ private:
 	UPROPERTY(meta=(BindWidget))
 	TObjectPtr<UButton> Button_Craftable;
 
+	UPROPERTY(meta=(BindWidget))
+	TObjectPtr<UCanvasPanel> CanvasPanel;
+
 	UFUNCTION()
 	void ShowEquippable();
 
@@ -54,4 +61,6 @@ private:
 	 * @param Button 要禁用的按键
 	 */
 	void SetActiveGrid(UInv_InventoryGrid* InventoryGrid, UButton* Button);
+
+	TWeakObjectPtr<UInv_InventoryGrid> ActiveGrid;
 };

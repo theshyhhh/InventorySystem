@@ -38,6 +38,9 @@ public:
 	UFUNCTION(Server, Reliable)
 	void Server_AddStacksToItem(UInv_ItemComponent* ItemComp, int32 StackCount, int32 Remainder);
 
+	UFUNCTION(Server, Reliable)
+	void Server_DropItem(UInv_InventoryItem* Item, int32 StackCount);
+
 	/**
 	 * 添加要随该组件复制的UObject
 	 * @param SubObj 要随该组件复制的SubObj
@@ -52,7 +55,6 @@ public:
 
 	FOnItemStackChangeSignature OnItemStackChangeDelegate;
 
-protected:
 	virtual void BeginPlay() override;
 
 private:
@@ -63,6 +65,8 @@ private:
 
 	/**关闭库存菜单 隐藏鼠标*/
 	void CloseInventoryMenu();
+
+	void SpawnDroppedItem(const UInv_InventoryItem* Item, int32 Count) const;
 
 	UPROPERTY(Replicated)
 	FInv_InventoryFastArraySerializer InventoryList;
@@ -76,4 +80,16 @@ private:
 	TSubclassOf<UInv_InventoryBaseWidget> InventoryMenuClass;
 
 	bool bInventoryMenuOpen = false;
+
+	UPROPERTY(EditDefaultsOnly, Category="Inventory")
+	float SpawnItemAngle = 80.f;
+
+	UPROPERTY(EditDefaultsOnly, Category="Inventory")
+	float MaxSpawnDistance = 100.f;
+
+	UPROPERTY(EditDefaultsOnly, Category="Inventory")
+	float MinSpawnDistance = 30.f;
+
+	UPROPERTY(EditDefaultsOnly, Category="Inventory")
+	float SpawnHeight = 70.f;
 };

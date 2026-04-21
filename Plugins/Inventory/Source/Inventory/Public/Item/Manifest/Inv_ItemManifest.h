@@ -23,6 +23,8 @@ struct INVENTORY_API FInv_ItemManifest
 
 	FGameplayTag GetItemTag() const { return ItemTag; }
 
+	TSubclassOf<AActor> GetItemClass() const { return ItemClass; }
+
 	template <typename T> requires std::derived_from<T, FInv_ItemFragment>
 	const T* GetFragmentOfType() const;
 
@@ -32,6 +34,9 @@ struct INVENTORY_API FInv_ItemManifest
 private:
 	UPROPERTY(EditAnywhere, Category="Inventory")
 	EInv_ItemCategory ItemCategory{EInv_ItemCategory::None};
+
+	UPROPERTY(EditAnywhere, Category="Inventory")
+	TSubclassOf<AActor> ItemClass;
 
 	UPROPERTY(EditAnywhere, Category="Inventory")
 	FGameplayTag ItemTag;

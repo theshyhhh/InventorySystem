@@ -31,6 +31,8 @@ public:
 
 	bool IsStackable() const;
 
+	bool IsConsumable() const;
+
 	//所有可堆叠该类物品的数目总和，不可堆叠固定为1
 	UPROPERTY(Replicated)
 	int32 TotalStackCount{0};
