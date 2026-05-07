@@ -41,6 +41,9 @@ public:
 	UFUNCTION(Server, Reliable)
 	void Server_DropItem(UInv_InventoryItem* Item, int32 StackCount);
 
+	UFUNCTION(Server, Reliable)
+	void Server_ConsumeItem(UInv_InventoryItem* Item);
+
 	/**
 	 * 添加要随该组件复制的UObject
 	 * @param SubObj 要随该组件复制的SubObj
@@ -54,6 +57,9 @@ public:
 	FInventoryNoRoomSignature OnInventoryNoRoomDelegate;
 
 	FOnItemStackChangeSignature OnItemStackChangeDelegate;
+
+	UPROPERTY()
+	TObjectPtr<UInv_InventoryBaseWidget> InventoryMenu;
 
 	virtual void BeginPlay() override;
 
@@ -72,9 +78,6 @@ private:
 	FInv_InventoryFastArraySerializer InventoryList;
 
 	TWeakObjectPtr<APlayerController> OwningPlayerController;
-
-	UPROPERTY()
-	TObjectPtr<UInv_InventoryBaseWidget> InventoryMenu;
 
 	UPROPERTY(EditDefaultsOnly, Category="Inventory")
 	TSubclassOf<UInv_InventoryBaseWidget> InventoryMenuClass;

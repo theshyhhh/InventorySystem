@@ -12,13 +12,14 @@ class INVENTORY_API UInv_HUDWidget : public UUserWidget
 	GENERATED_BODY()
 
 public:
-	virtual void NativeOnInitialized() override;
-	
 	UFUNCTION(BlueprintImplementableEvent, Category="Inventory")
 	void ShowPickUpMessage(const FString& Message);
 
 	UFUNCTION(BlueprintImplementableEvent, Category="Inventory")
 	void HidePickUpMessage();
+
+protected:
+	virtual void NativeOnInitialized() override;
 
 private:
 	UPROPERTY(meta=(BindWidget))

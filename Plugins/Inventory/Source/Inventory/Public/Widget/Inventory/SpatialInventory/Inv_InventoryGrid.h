@@ -50,6 +50,8 @@ public:
 	 */
 	void DropHoverItem();
 
+	FORCEINLINE bool HasHoverItem() const;
+
 protected:
 	/**
 	 * @brief 初始化库存网格组件。

@@ -4,6 +4,7 @@
 #include "Widget/Inventory/InventoryBase/Inv_InventoryBaseWidget.h"
 #include "Inv_SpatialInventoryWidget.generated.h"
 
+class UInv_ItemDescriptionWidget;
 class UCanvasPanel;
 class UButton;
 class UWidgetSwitcher;
@@ -17,10 +18,18 @@ class INVENTORY_API UInv_SpatialInventoryWidget : public UInv_InventoryBaseWidge
 public:
 	virtual FInv_SlotAvailabilityResult HasRoomForItem(UInv_ItemComponent* ItemComp) override;
 
+	virtual void OnItemHovered(UInv_InventoryItem* Item) override;
+
+	virtual void OnItemUnhovered() override;
+
+	virtual bool HasHoverItem() override;
+
 protected:
 	virtual void NativeOnInitialized() override;
 
 	virtual FReply NativeOnMouseButtonDown(const FGeometry& InGeometry, const FPointerEvent& InMouseEvent) override;
+	
+	virtual void NativeTick(const FGeometry& MyGeometry, float InDeltaTime) override;
 
 private:
 	UPROPERTY(meta=(BindWidget))
@@ -63,4 +72,15 @@ private:
 	void SetActiveGrid(UInv_InventoryGrid* InventoryGrid, UButton* Button);
 
 	TWeakObjectPtr<UInv_InventoryGrid> ActiveGrid;
+
+	UPROPERTY(EditAnywhere, Category="Inventory")
+	TSubclassOf<UInv_ItemDescriptionWidget> ItemDescriptionWidgetClass;
+
+	UPROPERTY()
+	TObjectPtr<UInv_ItemDescriptionWidget> ItemDescriptionWidget;
+
+	FTimerHandle ItemDescriptionTimer;
+
+	UPROPERTY(EditAnywhere, Category="Inventory")
+	float ShowItemDescriptionDelayTime;
 };

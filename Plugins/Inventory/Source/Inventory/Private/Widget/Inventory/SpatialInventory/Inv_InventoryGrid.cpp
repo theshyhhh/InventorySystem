@@ -12,6 +12,7 @@
 #include "Item/Fragment/Inv_ItemFragment.h"
 #include "Widget/Inventory/GridSlot/Inv_GridSlot.h"
 #include "Widget/Inventory/HoverItem/Inv_HoverItem.h"
+#include "Widget/Inventory/InventoryBase/Inv_InventoryBaseWidget.h"
 #include "Widget/Utils/Inv_WidgetUtils.h"
 #include "Widget/Inventory/SlottedItem/Inv_SlottedItemWidget.h"
 #include "Widget/ItemPopUp/Inv_ItemPopUpWidget.h"
@@ -452,6 +453,9 @@ void UInv_InventoryGrid::OnSlottedItemClicked(int32 GridIndex, const FPointerEve
 		CreateHoverItem(GridSlots[GridIndex]->Item.Get(), GridIndex);
 		//从背包UI中移除道具
 		RemoveItemFromGrid(GridSlots[GridIndex]->Item.Get(), GridIndex);
+		UInv_InventoryComponent* InvComp = UInv_InventoryStatics::GetInventoryComponent(GetOwningPlayer());
+		if (!IsValid(InvComp))return;
+		InvComp->InventoryMenu->OnItemUnhovered();
 		return;
 	}
 	//如果是右键点击SlottedItem且当前没有HoverItem和ItemPopUpMenu则创建ItemPopUpMenu
@@ -657,6 +661,15 @@ void UInv_InventoryGrid::SplitItem(int32 SplitAmount, int32 GridIndex)
 
 void UInv_InventoryGrid::ConsumeItem(int32 GridIndex)
 {
+	UInv_InventoryItem* Item = GridSlots[GridIndex]->Item.Get();
+	if (!IsValid(Item))return;
+	GridSlots[GridIndex]->StackCount -= 1;
+	SlottedItemWidgets[GridIndex]->UpdateStackCount(GridSlots[GridIndex]->StackCount);
+	InventoryComponent->Server_ConsumeItem(Item);
+	if (GridSlots[GridIndex]->StackCount <= 0)
+	{
+		RemoveItemFromGrid(Item, GridIndex);
+	}
 }
 
 void UInv_InventoryGrid::DropItem(int32 GridIndex)
@@ -673,6 +686,11 @@ void UInv_InventoryGrid::DropHoverItem()
 	if (!HoverItem->Item.IsValid())return;
 	InventoryComponent->Server_DropItem(HoverItem->Item.Get(), HoverItem->GetStackCount());
 	ClearHoverItem();
+}
+
+bool UInv_InventoryGrid::HasHoverItem() const
+{
+	return IsValid(HoverItem);
 }
 
 void UInv_InventoryGrid::ShowCursor()

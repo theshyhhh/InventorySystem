@@ -3,6 +3,7 @@
 #include "Inventory.h"
 #include "InventoryManagement/Utils/Inv_InventoryStatics.h"
 #include "Item/Inv_InventoryItem.h"
+#include "Item/Inv_ItemTag.h"
 #include "Item/Component/Inv_ItemComponent.h"
 #include "Item/Fragment/Inv_ItemFragment.h"
 #include "Net/UnrealNetwork.h"
@@ -87,6 +88,23 @@ void UInv_InventoryComponent::SpawnDroppedItem(const UInv_InventoryItem* Item, i
 	}
 
 	UInv_InventoryStatics::SpawnItemByItemManifest(this, ItemManifest, SpawnLocation, RotatedForward.Rotation());
+}
+
+void UInv_InventoryComponent::Server_ConsumeItem_Implementation(UInv_InventoryItem* Item)
+{
+	const int32 NewStackCount = Item->TotalStackCount - 1;
+	if (NewStackCount <= 0)
+	{
+		InventoryList.RemoveEntry(Item);
+	}
+	else
+	{
+		Item->TotalStackCount = NewStackCount;
+	}
+	if (FInv_ConsumableFragment* Consumable = Item->GetItemManifestMutable().GetFragmentOfTypeMutable<FInv_ConsumableFragment>())
+	{
+		Consumable->Consume(OwningPlayerController.Get());
+	}
 }
 
 void UInv_InventoryComponent::AddSubObject(UObject* SubObj)

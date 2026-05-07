@@ -6,6 +6,7 @@
 #include "StructUtils/InstancedStruct.h"
 #include "Inv_ItemManifest.generated.h"
 
+class UInv_CompositeBase;
 class UInv_InventoryItem;
 struct FInv_ItemFragment;
 
@@ -31,6 +32,13 @@ struct INVENTORY_API FInv_ItemManifest
 	template <typename T> requires std::derived_from<T, FInv_ItemFragment>
 	T* GetFragmentOfTypeMutable();
 
+	template <typename T> requires std::derived_from<T, FInv_ItemFragment>
+	TArray<const T*> GetAllFragmentsOfType() const;
+
+	void AssimilateInventoryFragments(UInv_CompositeBase* Composite) const;
+
+	FORCEINLINE TArray<TInstancedStruct<FInv_ItemFragment>>& GetFragmentsMutable() { return Fragments; }
+
 private:
 	UPROPERTY(EditAnywhere, Category="Inventory")
 	EInv_ItemCategory ItemCategory{EInv_ItemCategory::None};
@@ -38,7 +46,7 @@ private:
 	UPROPERTY(EditAnywhere, Category="Inventory")
 	TSubclassOf<AActor> ItemClass;
 
-	UPROPERTY(EditAnywhere, Category="Inventory")
+	UPROPERTY(EditAnywhere, Category="Inventory", meta=(Categories="GameItem"))
 	FGameplayTag ItemTag;
 
 	UPROPERTY(EditAnywhere, Category="Inventory", meta=(ExcludeBaseStruct))
@@ -69,4 +77,18 @@ T* FInv_ItemManifest::GetFragmentOfTypeMutable()
 		}
 	}
 	return nullptr;
+}
+
+template <typename T> requires std::derived_from<T, FInv_ItemFragment>
+TArray<const T*> FInv_ItemManifest::GetAllFragmentsOfType() const
+{
+	TArray<const T*> Array;
+	for (const TInstancedStruct<FInv_ItemFragment>& Fragment : Fragments)
+	{
+		if (const T* FragmentPtr = Fragment.GetPtr<T>())
+		{
+			Array.Add(FragmentPtr);
+		}
+	}
+	return Array;
 }
